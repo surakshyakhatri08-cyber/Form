@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 const CounterControls = ({ count, setCount }: { count: number, setCount: React.Dispatch<React.SetStateAction<number>> }) => {
   return (
