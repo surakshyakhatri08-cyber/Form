@@ -3,16 +3,29 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "./components/form-schema";
 import type { PostFormData } from "./components/form-schema";
 import { FieldGroup } from "./components/form-field";
+import { toast } from "sonner";
 
 const UserForm = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<PostFormData>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<PostFormData>({
     resolver: zodResolver(postSchema),
   });
 
-  const onSubmit = (data: PostFormData) => console.log("Post Data:", data);
+const onSubmit = async (data: PostFormData) => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));     
+      console.log("Post Data:", data);
+
+      toast.success("Post published successfully!");
+
+      reset();
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4 font-sans text-white">
+  
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md space-y-6">
         <h2 className="text-3xl font-bold mb-8 text-white">Create Post</h2>
 
