@@ -1,84 +1,56 @@
-import { useEffect, useState } from 'react'
-import UserCard from './components/user-card'
-import { LoadingSpinner, ErrorMessage } from './components/status-messages'
+import { useState, useEffect } from "react";
+import { getPostsData } from "./components/axios-fetching";
+import PostCard from "./components/post-card";
 
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  company: { name: string };
-};
+function App() {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-const App = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [width, setWidth] = useState<number>(window.innerWidth);
+  const handleLoad = async () => {
+    setLoading(true);
+    console.log("🔄 API Fetching started...");
+    try {
 
-  useEffect(() => {
-    const handleResize = () => {
-      setWidth(window.innerWidth);
-      console.log(`%c📏 Window Resized: ${window.innerWidth}px`, "color: #aa3bff; font-weight: bold");
-    };
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await getPostsData();
 
-    window.addEventListener('resize', handleResize);
+      console.log("✅ Data Received Successfully!");
+      console.table(data.slice(0, 5));
 
-    return () => {
-      console.log("Cleaning up resize listener...");
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    const getUsers = async () => {
-      try {
-        console.log("%c🚀 API Fetching Started...", "color: blue; font-weight: bold");
-        setLoading(true);
-        setError(null);
-
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-
-        const response = await fetch(`https://jsonplaceholder.typicode.com/users`);
-        if (!response.ok) throw new Error("Failed to fetch data from server");
-
-        const json: User[] = await response.json();
-
-        console.log("%c✅ Data Received Successfully:", "color: green; font-weight: bold", json);
-
-        setUsers(json);
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        console.error("%c❌ Fetch Error:", "color: red; font-weight: bold", errorMessage);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-        console.log("%c🏁 Loading Sequence Finished.", "color: gray; font-style: italic");
-      }
+      setPosts(data);
+    } catch (e) {
+      console.error("❌ Error fetching data:", e);
+    } finally {
+      setLoading(false);
+      console.log("🏁 Fetch process finished.");
     }
+  };
 
-    getUsers();
+  useEffect(() => {
+    handleLoad();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      <div className="w-full max-w-2xl">
-        <header className="mb-10 text-center border-b pb-6 border-gray-200">
-          <h1 className="text-4xl font-black text-gray-900 mb-2">User Hub</h1>
-          <p className="text-sm font-mono text-gray-500 bg-white px-4 py-1 rounded-full shadow-sm inline-block">
-            Window Width: <strong>{width}px</strong>
-          </p>
-        </header>
+    <div className="p-10 bg-slate-50 min-h-screen">
+      <div className="max-w-4xl mx-auto text-center">
 
-        {loading && <LoadingSpinner />}
-        {error && <ErrorMessage message={error} />}
+        <button
+          onClick={handleLoad}
+          disabled={loading}
+          className={`mb-8 px-6 py-2 rounded-full font-bold transition-all flex items-center gap-2 mx-auto
+            ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg active:scale-95'}`}
+        >
+          {loading && (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+          {loading ? "Fetching..." : "Refresh Posts"}
+        </button>
 
-        {!loading && !error && (
-          <div className="grid gap-5">
-            {users.map((user) => (
-              <UserCard key={user.id} user={user} />
-            ))}
-          </div>
-        )}
+        <div className={`grid md:grid-cols-2 gap-6 transition-opacity duration-300 ${loading ? 'opacity-30' : 'opacity-100'}`}>
+          {posts.map((p: any) => (
+            <PostCard key={p.id} title={p.title} body={p.body} />
+          ))}
+        </div>
       </div>
     </div>
   );
